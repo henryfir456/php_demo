@@ -1,0 +1,83 @@
+<?php
+require "../common/common.php";
+
+/**
+ * 檢查帳號是否已存在
+ */
+function checkAccountExist() {
+	global $oDb;
+
+	$sSql = "SELECT COUNT(*) AS count
+			FROM (
+				SELECT D FROM A WHERE D = ?
+				UNION ALL
+				SELECT D FROM B WHERE D = ?
+			) a";
+	$aParam = array(trim($_POST["C"]), trim($_POST["C"])) ;
+	$oDb->query ( $sSql, $aParam );
+	if ($oDb->fetch ( 0 )->count > 0)
+		return true;
+
+	return false;
+}
+
+/**
+ * 確認必填資料是否為空
+ */
+function checkDataRequired() {
+	if (empty($_POST["accountNo"]))
+		return "帳號不得為空！";
+	if (empty($_POST["password"]))
+		return "密碼不得為空！";
+	if (empty($_POST["chtname"]))
+		return "姓名不得為空！";
+
+	return false;
+}
+
+/**
+ * 建立帳號是否成功
+ */
+function createAccount() {
+	global $oDb;
+
+	//新增校外人士帳號
+	$sql = "INSERT INTO B(
+				a, b, c, d, e
+			)
+			VALUES  (
+				?, ?, ?, ?, ?)" ;
+	$param = array(
+		trim($_POST["A"]), trim($_POST["B"]), $_POST["C"], 1, 0) ;
+	$result = $oDb->query($sql, $param) ;
+
+	if ($result)
+		return true;
+
+	return false;
+}
+
+$session = new go_session ();
+$oDb      = new go_db ;
+$oDb_acad = new go_msdb_acad (); // 建立資料庫物件(教務)
+
+// 帳號是否已存在
+if (checkAccountExist()) {
+	echo "帳號已存在!!";
+	die();
+}
+
+// 確認必填資料
+if ($message = checkDataRequired()) {
+	echo $message;
+	die();
+}
+
+// 建立帳號是否成功
+if (!createAccount()) {
+	echo "建立帳號失敗!!";
+	die();
+}
+
+
+?>
